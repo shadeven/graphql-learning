@@ -1,49 +1,56 @@
 var express = require('express');
 var graphqlHTTP = require('express-graphql');
-var { buildSchema } = require('graphql');
-var pgp = require('pg-promise');
+var { graphql, GraphQLSchema, GraphQLObjectType, GraphQLID, GraphQLString, GraphQLNonNull, GraphQLList } = require('graphql');
+var pgp = require('pg-promise')();
 var db = pgp('postgres://eqadmin:Eque11a@flextra.dcs.flinders.edu.au:5432/flextra-dev');
 
-var schema = buildSchema(`
-  type Dice {
-    num: Int
-    color: String
-  }
+const Supervisor = new GraphQLObjectType({
+  name: 'Supervisor',
+  fields: () => ({
+    id: {
+      type: GraphQLID
+    },
 
-  type Query {
-    quoteOfTheDay: String
-    rollDice(num: Int!): Dice
-    rollDices: [Int]
-  }
-  
-  type Mutation {
-    
-  }
-`);
+    supv_fan: {
+      type: GraphQLString
+    },
 
-var root = {
-  quoteOfTheDay: () => {
-    return Math.random() < 0.5 ? 'Take it easy' : 'Salvation lies within';
-  },
+    family_name: {
+      type: GraphQLString
+    },
 
-  rollDice: ({num}) => {
-    var dice = {
-      num: num,
-      color: "Blue"
+    given_name: {
+      type: GraphQLString
     }
+  })
+});
 
-    return dice;
-  },
+const Query = new GraphQLObjectType({
+  name: 'Query',
+  fields: () => ({
+    viewer: {
+      type: Supervisor,
+      resolve() {
+        return db.one("select * from tbl_rhd_supervisors where id = '3401'");
+      }
+    }
+  })
+});
 
-  rollDices: () => {
-    var dices = [1, 2, 3];
-    return dices;
-  }
-};
+const Schema = new GraphQLSchema({
+  query: Query
+});
+
+// graphql(Schema, `{
+//   viewer {
+//     id
+//     supv_fan
+//   }
+// }`).then(result => console.log(result));
 
 var app = express();
 app.use('/graphql', graphqlHTTP({
-  schema: schema,
+  schema: Schema,
   rootValue: root,
   graphiql: true,
 }));
