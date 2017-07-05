@@ -21,6 +21,30 @@ const Supervisor = new GraphQLObjectType({
 
     given_name: {
       type: GraphQLString
+    },
+
+    updates: {
+      type: new GraphQLList(Update),
+      resolve(parent, args) {
+        return db.any("select * from tbl_rhd_supervisors_updates where rhd_supv_id = $1", parent.id)
+      }
+    }
+  })
+});
+
+const Update = new GraphQLObjectType({
+  name: 'Update',
+  fields: () => ({
+    column_update: {
+      type: GraphQLString
+    },
+
+    old_value: {
+      type: GraphQLString
+    },
+
+    new_value: {
+      type: GraphQLString
     }
   })
 });
