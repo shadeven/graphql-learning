@@ -30,8 +30,20 @@ const Query = new GraphQLObjectType({
   fields: () => ({
     viewer: {
       type: Supervisor,
-      resolve() {
-        return db.one("select * from tbl_rhd_supervisors where id = '3401'");
+      resolve(parent, args, {id}) {
+        return db.one("select * from tbl_rhd_supervisors where id = $1", id);
+      }
+    },
+
+    supervisor: {
+      type: Supervisor,
+      args: {
+        id: {
+          type: new GraphQLNonNull(GraphQLID)
+        }
+      },
+      resolve(parent, {id}) {
+        return db.one("select * from tbl_rhd_supervisors where id = $1", id);
       }
     }
   })
@@ -40,13 +52,6 @@ const Query = new GraphQLObjectType({
 const Schema = new GraphQLSchema({
   query: Query
 });
-
-// graphql(Schema, `{
-//   viewer {
-//     id
-//     supv_fan
-//   }
-// }`).then(result => console.log(result));
 
 var app = express();
 app.use('/graphql', graphqlHTTP({
